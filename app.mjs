@@ -1,5 +1,8 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import connectionPool from "./utils/db.mjs";
+import postsRouter from "./routes/posts.mjs";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -19,19 +22,72 @@ app.use(
 );
 
 app.get("/", (req, res) => {
-  res.send("Hello TechUp!");
+  try {
+    return res.status(200).send("Hello TechUp!");
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
 });
 
 app.get("/health", (req, res) => {
-  res.status(200).json({ message: "OK" });
+  try {
+    return res.status(200).json({ message: "OK" });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Health check failed",
+      error: error.message,
+    });
+  }
 });
 
 app.get("/profile", (req, res) => {
-  res.status(200).json({
-    data: {
-      name: "john",
-      age: 20,
-    },
+  try {
+    return res.status(200).json({
+      data: {
+        name: "john",
+        age: 20,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Failed to get profile",
+      error: error.message,
+    });
+  }
+});
+
+app.get("/db-test", async (req, res) => {
+  try {
+    const result = await connectionPool.query("SELECT NOW() AS current_time");
+    return res.status(200).json({
+      message: "Database connection successful",
+      data: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Database connection error:", error.message);
+    return res.status(500).json({
+      message: "Database connection failed",
+      error: error.message,
+    });
+  }
+});
+
+app.use("/posts", postsRouter);
+
+app.use((req, res) => {
+  return res.status(404).json({
+    message: "Route not found",
+  });
+});
+
+app.use((error, req, res, next) => {
+  console.error("Unhandled error:", error);
+  return res.status(500).json({
+    message: "Internal server error",
+    error: error.message,
   });
 });
 
