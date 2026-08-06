@@ -1,5 +1,6 @@
 import { Router } from "express";
 import connectionPool from "../utils/db.mjs";
+import { validatePostBody } from "../middlewares/postValidation.mjs";
 
 const postsRouter = Router();
 
@@ -21,7 +22,7 @@ const postFromJoin = `
   INNER JOIN statuses ON posts.status_id = statuses.id
 `;
 
-// 4. GET /posts — list with pagination & filter
+// GET /posts — list with pagination & filter
 postsRouter.get("/", async (req, res) => {
   try {
     const page = Math.max(Number(req.query.page) || 1, 1);
@@ -79,7 +80,32 @@ postsRouter.get("/", async (req, res) => {
   }
 });
 
-// 1. GET /posts/:postId — single post
+// POST /posts — create post
+postsRouter.post("/", validatePostBody, async (req, res) => {
+  const { title, image, category_id, description, content, status_id } =
+    req.body;
+
+  try {
+    await connectionPool.query(
+      `
+        INSERT INTO posts (title, image, category_id, description, content, status_id, date, likes_count)
+        VALUES ($1, $2, $3, $4, $5, $6, NOW(), 0)
+      `,
+      [title, image, category_id, description, content, status_id]
+    );
+
+    return res.status(201).json({
+      message: "Created post sucessfully",
+    });
+  } catch (error) {
+    console.error("POST /posts error:", error.message);
+    return res.status(500).json({
+      message: "Server could not create post because database connection",
+    });
+  }
+});
+
+// GET /posts/:postId — single post
 postsRouter.get("/:postId", async (req, res) => {
   const { postId } = req.params;
 
@@ -108,8 +134,8 @@ postsRouter.get("/:postId", async (req, res) => {
   }
 });
 
-// 2. PUT /posts/:postId — update post
-postsRouter.put("/:postId", async (req, res) => {
+// PUT /posts/:postId — update post
+postsRouter.put("/:postId", validatePostBody, async (req, res) => {
   const { postId } = req.params;
   const { title, image, category_id, description, content, status_id } =
     req.body;
@@ -148,7 +174,7 @@ postsRouter.put("/:postId", async (req, res) => {
   }
 });
 
-// 3. DELETE /posts/:postId — delete post
+// DELETE /posts/:postId — delete post
 postsRouter.delete("/:postId", async (req, res) => {
   const { postId } = req.params;
 
