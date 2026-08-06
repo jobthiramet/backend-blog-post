@@ -80,31 +80,6 @@ postsRouter.get("/", async (req, res) => {
   }
 });
 
-// POST /posts — create post
-postsRouter.post("/", validatePostBody, async (req, res) => {
-  const { title, image, category_id, description, content, status_id } =
-    req.body;
-
-  try {
-    await connectionPool.query(
-      `
-        INSERT INTO posts (title, image, category_id, description, content, status_id, date, likes_count)
-        VALUES ($1, $2, $3, $4, $5, $6, NOW(), 0)
-      `,
-      [title, image, category_id, description, content, status_id]
-    );
-
-    return res.status(201).json({
-      message: "Created post sucessfully",
-    });
-  } catch (error) {
-    console.error("POST /posts error:", error.message);
-    return res.status(500).json({
-      message: "Server could not create post because database connection",
-    });
-  }
-});
-
 // GET /posts/:postId — single post
 postsRouter.get("/:postId", async (req, res) => {
   const { postId } = req.params;

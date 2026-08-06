@@ -1,20 +1,21 @@
+// app.mjs
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import postRoutes from "./apps/postRoutes.mjs";
+import postsRouter from "./routes/posts.mjs";
+import authRouter from "./routes/auth.mjs";
 import rootRouter from "./routes/root.mjs";
 import healthRouter from "./routes/health.mjs";
 import profileRouter from "./routes/profile.mjs";
 import dbTestRouter from "./routes/dbTest.mjs";
-import postsRouter from "./routes/posts.mjs";
-import authRouter from "./routes/auth.mjs";
 import protectUser from "./middlewares/protectUser.mjs";
 import protectAdmin from "./middlewares/protectAdmin.mjs";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-app.use(express.json());
-
+// Middleware
 app.use(
   cors({
     origin: [
@@ -25,12 +26,15 @@ app.use(
     ],
   })
 );
+app.use(express.json());
 
+// Routes
 app.use("/", rootRouter);
 app.use("/health", healthRouter);
 app.use("/profile", profileRouter);
 app.use("/db-test", dbTestRouter);
-app.use("/posts", postsRouter);
+app.use("/posts", postRoutes); // create post + image upload (admin)
+app.use("/posts", postsRouter); // list/get/update/delete posts
 app.use("/auth", authRouter);
 
 app.get("/protected-route", protectUser, (req, res) => {
@@ -55,6 +59,7 @@ app.use((error, req, res, next) => {
   });
 });
 
+// Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

@@ -1,10 +1,10 @@
-// Create PostgreSQL Connection Pool here !
+// utils/db.mjs
 import dns from "dns";
-import * as pg from "pg";
+import pg from "pg";
 
 dns.setDefaultResultOrder("ipv4first");
 
-const { Pool } = pg.default;
+const { Pool } = pg;
 
 const connectionPool = new Pool({
   connectionString: process.env.CONNECTION_STRING,
